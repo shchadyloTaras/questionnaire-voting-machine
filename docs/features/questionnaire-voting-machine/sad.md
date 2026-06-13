@@ -319,6 +319,31 @@ sequenceDiagram
     Note over U,S: Postcondition: Submitted attempt is read-only for normal Designer use
 ```
 
+### Full-assessment timer expires mid-session
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as <user>
+    participant UI as <ui>
+    participant S as <service>
+    participant D as <data-store>
+
+    Note over U,S: Precondition: Designer has an active session with a full-assessment timing rule configured and is mid-question when the timer fires
+    UI->>S: Report full-assessment timer expiry
+    S->>D: Read session state, recorded answers, and remaining required questions
+    D-->>S: Return session state and unanswered required questions
+    S->>D: Record each remaining required question as not answered in time
+    Note over S,D: persists timed-out response signal for every remaining required question at zero score
+    D-->>S: Confirm timed-out signals recorded
+    S->>D: Submit recorded answers and mark session complete and read-only
+    Note over S,D: persists submitted session state
+    D-->>S: Confirm session submitted
+    S-->>UI: Return session-ended completion state
+    UI-->>U: Display non-punitive completion message
+    Note over U,S: Postcondition: Session complete with all recorded answers and remaining required questions scored zero — full-assessment timer takes precedence over per-question timer
+```
+
 ### Review assigned Designer profile
 
 ```mermaid
@@ -529,7 +554,7 @@ sequenceDiagram
 | User story | Runtime flow |
 |---|---|
 | US-01 Open self-assessment | Open self-assessment |
-| US-02 Complete timed questionnaire | Complete timed self-assessment |
+| US-02 Complete timed questionnaire | Complete timed self-assessment; Full-assessment timer expires mid-session |
 | US-03 See completion confirmation | Complete timed self-assessment |
 | US-04 Review designer profile | Review assigned Designer profile |
 | US-05 Complete lead assessment | Complete Lead assessment |
@@ -548,6 +573,7 @@ sequenceDiagram
 | AC-02 | Complete timed self-assessment happy branch records responses against a published version and marks the submitted attempt read-only. |
 | AC-03 | Complete timed self-assessment missing-answer branch keeps the current step and explains the required answer. |
 | AC-04 | Complete timed self-assessment timer-expiry branch records the unanswered-in-time signal and advances by published timing rules. |
+| AC-04b | Full-assessment timer expires mid-session: records every remaining required question as not answered in time at zero score, submits all recorded answers, and marks the session complete and read-only. |
 | AC-05 | Complete timed self-assessment completion path returns constructive, non-punitive confirmation. |
 | AC-06 | Review assigned Designer profile happy branch returns profile, status, and lead-assessment actions. |
 | AC-07 | Review assigned Designer profile denied branch hides personal details and explains missing permission. |
