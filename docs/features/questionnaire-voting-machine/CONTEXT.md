@@ -18,6 +18,7 @@ updated_at: "2026-06-13"
 - Designer - A UX/UI designer who completes a self-assessment of their AI knowledge, AI usage, and AI safety judgment. NOT the Design Lead evaluating them.
 - Design Lead - A lead or manager who evaluates a Designer from an observer perspective using similar AI competency criteria. NOT the Workshop Facilitator configuring the questionnaire.
 - Lead assessment - A Design Lead's assessment of a Designer's practical AI competency. NOT the Designer's self-assessment.
+- Presentation-friendly results view - A facilitator-facing summary mode that hides unnecessary personal detail during a live workshop demo. NOT a full analytics dashboard.
 - Questionnaire - A configured set of categories, questions, answer options, scoring rules, and timing rules used for assessment. NOT a one-off survey with no scoring.
 - Recommendation - A constructive next learning step generated from scores and gaps. NOT a punitive performance label.
 - Self-assessment - A Designer's own answers about AI knowledge, usage, confidence, and critical judgment. NOT an externally verified skill proof.

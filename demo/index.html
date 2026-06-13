@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Questionnaire Voting Machine Demo</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172026;
+      --muted: #63717a;
+      --line: #dce4e8;
+      --panel: #ffffff;
+      --soft: #f4f7f6;
+      --brand: #0f766e;
+      --brand-dark: #115e59;
+      --accent: #b45309;
+      --ok: #166534;
+      --warn: #92400e;
+      --blue: #1d4ed8;
+      --shadow: 0 16px 40px rgba(23, 32, 38, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--soft);
+      color: var(--ink);
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+    }
+
+    .sidebar {
+      background: #172026;
+      color: #f8fbfb;
+      padding: 24px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .brand {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding-bottom: 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+    }
+
+    .mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: #99f6e4;
+      color: #134e4a;
+      font-weight: 800;
+    }
+
+    .brand strong { display: block; font-size: 15px; line-height: 1.2; }
+    .brand span { color: #b8c7cd; font-size: 12px; }
+
+    .nav {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav button {
+      width: 100%;
+      border: 0;
+      border-radius: 8px;
+      padding: 11px 12px;
+      text-align: left;
+      background: transparent;
+      color: #cbd6db;
+      cursor: pointer;
+    }
+
+    .nav button.active {
+      background: #244049;
+      color: #ffffff;
+    }
+
+    .sidebar-note {
+      margin-top: auto;
+      padding: 14px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #dce7ea;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    main {
+      min-width: 0;
+      padding: 28px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      margin-bottom: 4px;
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    h2 { font-size: 22px; margin-bottom: 12px; }
+    h3 { font-size: 15px; margin-bottom: 10px; }
+
+    .muted { color: var(--muted); }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 13px;
+      background: #fff;
+      color: var(--ink);
+      cursor: pointer;
+    }
+
+    .btn.primary {
+      border-color: var(--brand);
+      background: var(--brand);
+      color: white;
+    }
+
+    .btn.primary:hover { background: var(--brand-dark); }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .grid.metrics {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin-bottom: 18px;
+    }
+
+    .metric,
+    .panel,
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .metric { padding: 18px; }
+    .metric .label { color: var(--muted); font-size: 13px; }
+    .metric .value { margin-top: 8px; font-size: 30px; font-weight: 800; }
+
+    .two {
+      grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+      align-items: start;
+    }
+
+    .panel { padding: 20px; }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .table th,
+    .table td {
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    .table th { color: var(--muted); font-weight: 700; font-size: 12px; }
+    .table tr:last-child td { border-bottom: 0; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: #e0f2fe;
+      color: #075985;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .pill.good { background: #dcfce7; color: var(--ok); }
+    .pill.wait { background: #fef3c7; color: var(--warn); }
+    .pill.gap { background: #fee2e2; color: #991b1b; }
+
+    .bar {
+      height: 10px;
+      border-radius: 999px;
+      background: #e7eef0;
+      overflow: hidden;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--brand);
+    }
+
+    .flow {
+      display: none;
+    }
+
+    .flow.active {
+      display: block;
+    }
+
+    .question {
+      display: grid;
+      gap: 12px;
+    }
+
+    .option {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfdfd;
+      cursor: pointer;
+    }
+
+    .timer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      background: #fff7ed;
+      color: #7c2d12;
+      margin-bottom: 14px;
+    }
+
+    .progress {
+      display: grid;
+      gap: 8px;
+      margin: 18px 0;
+    }
+
+    .profile {
+      display: grid;
+      grid-template-columns: 64px 1fr;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: #ccfbf1;
+      color: #134e4a;
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .comparison {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .score-card {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfdfd;
+    }
+
+    .score-card strong {
+      display: block;
+      font-size: 28px;
+      margin: 6px 0;
+    }
+
+    .recommendations {
+      display: grid;
+      gap: 10px;
+    }
+
+    .recommendations li {
+      margin-bottom: 8px;
+      color: var(--muted);
+    }
+
+    .present {
+      background: #0f172a;
+      color: white;
+      min-height: 72vh;
+      border-radius: 8px;
+      padding: 34px;
+      display: grid;
+      align-content: space-between;
+      gap: 28px;
+    }
+
+    .present h2 {
+      font-size: clamp(32px, 5vw, 60px);
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+
+    .present .metric {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.16);
+      color: white;
+      box-shadow: none;
+    }
+
+    .present .metric .label,
+    .present .muted { color: #cbd5e1; }
+
+    .footer-strip {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: #cbd5e1;
+      font-size: 13px;
+    }
+
+    @media (max-width: 860px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+      .grid.metrics, .two, .comparison { grid-template-columns: 1fr; }
+      main { padding: 18px; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .actions { justify-content: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="mark">AI</div>
+        <div>
+          <strong>Questionnaire Voting Machine</strong>
+          <span>Workshop MVP preview</span>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="Demo views">
+        <button class="active" data-view="dashboard">Dashboard</button>
+        <button data-view="designer">Designer Assessment</button>
+        <button data-view="lead">Lead Assessment</button>
+        <button data-view="comparison">Comparison</button>
+        <button data-view="present">Presentation Mode</button>
+      </nav>
+
+      <div class="sidebar-note">
+        Static prototype for the workshop: enough visual flow to discuss product scope, roles, privacy, scoring, and next implementation steps.
+      </div>
+    </aside>
+
+    <main>
+      <section class="flow active" id="dashboard">
+        <div class="topbar">
+          <div>
+            <h1>Team AI Competency Snapshot</h1>
+            <p class="muted">Workshop Facilitator view for a fictional design team.</p>
+          </div>
+          <div class="actions">
+            <button class="btn">Edit Questionnaire</button>
+            <button class="btn primary" data-jump="designer">Start Demo Flow</button>
+          </div>
+        </div>
+
+        <div class="grid metrics">
+          <div class="metric"><div class="label">Designers</div><div class="value">12</div></div>
+          <div class="metric"><div class="label">Self-assessments</div><div class="value">9/12</div></div>
+          <div class="metric"><div class="label">Lead reviews</div><div class="value">7/12</div></div>
+          <div class="metric"><div class="label">Average maturity</div><div class="value">3.2</div></div>
+        </div>
+
+        <div class="grid two">
+          <div class="panel">
+            <h2>Designer Status</h2>
+            <table class="table">
+              <thead>
+                <tr><th>Designer</th><th>Self</th><th>Lead</th><th>Combined</th><th>Focus</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Marta Kovalenko</td><td><span class="pill good">Complete</span></td><td><span class="pill good">Complete</span></td><td>68</td><td>Prompting depth</td></tr>
+                <tr><td>Denys Savchuk</td><td><span class="pill good">Complete</span></td><td><span class="pill wait">Pending</span></td><td>-</td><td>Needs lead review</td></tr>
+                <tr><td>Olena Shevchenko</td><td><span class="pill good">Complete</span></td><td><span class="pill good">Complete</span></td><td>54</td><td>Validation habits</td></tr>
+                <tr><td>Ivan Bondar</td><td><span class="pill wait">In progress</span></td><td><span class="pill wait">Pending</span></td><td>-</td><td>Finish assessment</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <h2>Category Gaps</h2>
+            <div class="grid">
+              <div>
+                <h3>Critical Thinking and AI Safety</h3>
+                <div class="bar"><span style="width: 42%"></span></div>
+              </div>
+              <div>
+                <h3>Prompting Skills</h3>
+                <div class="bar"><span style="width: 68%"></span></div>
+              </div>
+              <div>
+                <h3>UX Research with AI</h3>
+                <div class="bar"><span style="width: 56%"></span></div>
+              </div>
+              <div>
+                <h3>Workflow Automation</h3>
+                <div class="bar"><span style="width: 74%"></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="flow" id="designer">
+        <div class="topbar">
+          <div>
+            <h1>Designer Self-assessment</h1>
+            <p class="muted">A constructive timed assessment, not a pass/fail test.</p>
+          </div>
+          <div class="actions"><button class="btn primary" data-jump="lead">Submit Assessment</button></div>
+        </div>
+
+        <div class="grid two">
+          <div class="panel">
+            <div class="timer"><strong>Question timer</strong><span>01:24 remaining</span></div>
+            <div class="progress">
+              <span class="muted">Question 4 of 7 · Critical Thinking and AI Safety</span>
+              <div class="bar"><span style="width: 57%"></span></div>
+            </div>
+            <div class="question">
+              <h2>What would you do if AI gave a convincing but unverified research claim?</h2>
+              <label class="option"><input type="radio" name="q4"> Use it directly because the wording sounds confident.</label>
+              <label class="option"><input type="radio" name="q4"> Ask AI again until it gives a stronger answer.</label>
+              <label class="option"><input type="radio" name="q4" checked> Verify against source material before using it.</label>
+              <label class="option"><input type="radio" name="q4"> Ignore all AI output in research work.</label>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2>Privacy Note</h2>
+            <p class="muted">Your answers are used to identify growth areas and recommended learning focus. Lead assessment results are not shown to you unless the facilitator enables that visibility.</p>
+            <h3>Current categories</h3>
+            <p><span class="pill">AI Awareness</span> <span class="pill">Prompting</span> <span class="pill">AI Safety</span></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="flow" id="lead">
+        <div class="topbar">
+          <div>
+            <h1>Lead Assessment</h1>
+            <p class="muted">Observer perspective for an assigned Designer.</p>
+          </div>
+          <div class="actions"><button class="btn primary" data-jump="comparison">Save Lead Review</button></div>
+        </div>
+
+        <div class="grid two">
+          <div class="panel">
+            <div class="profile">
+              <div class="avatar">MK</div>
+              <div>
+                <h2>Marta Kovalenko</h2>
+                <p class="muted">Product Designer · Assigned to Lead: Iryna Melnyk</p>
+              </div>
+            </div>
+            <table class="table" style="margin-top: 18px">
+              <tbody>
+                <tr><td>Self-assessment</td><td><span class="pill good">Complete</span></td></tr>
+                <tr><td>Lead assessment</td><td><span class="pill wait">In progress</span></td></tr>
+                <tr><td>Result visibility</td><td>Lead details hidden from Designer</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <h2>Observed AI Practice</h2>
+            <label class="option"><input type="radio" name="lead" checked> Often validates AI output against project evidence.</label>
+            <label class="option"><input type="radio" name="lead"> Sometimes validates output, but not consistently.</label>
+            <label class="option"><input type="radio" name="lead"> Rarely explains how AI-supported decisions were checked.</label>
+            <h3 style="margin-top: 16px">Constructive comment</h3>
+            <textarea rows="4" style="width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 10px;">Recommended focus: document validation steps more consistently during research synthesis.</textarea>
+          </div>
+        </div>
+      </section>
+
+      <section class="flow" id="comparison">
+        <div class="topbar">
+          <div>
+            <h1>Self vs Lead Comparison</h1>
+            <p class="muted">Scores are calculated on the server from recorded responses.</p>
+          </div>
+          <div class="actions"><button class="btn primary" data-jump="present">Open Presentation Mode</button></div>
+        </div>
+
+        <div class="panel">
+          <div class="comparison">
+            <div class="score-card"><span class="muted">Self-score</span><strong>72</strong><span class="pill">AI Power User</span></div>
+            <div class="score-card"><span class="muted">Lead-score</span><strong>65</strong><span class="pill">AI Power User</span></div>
+            <div class="score-card"><span class="muted">Combined score</span><strong>68</strong><span class="pill good">Recommended focus ready</span></div>
+          </div>
+        </div>
+
+        <div class="grid two" style="margin-top: 16px">
+          <div class="panel">
+            <h2>Category Gap Signals</h2>
+            <table class="table">
+              <tbody>
+                <tr><td>Prompting Skills</td><td>+4</td><td><span class="pill good">Aligned</span></td></tr>
+                <tr><td>Critical Thinking and AI Safety</td><td>-11</td><td><span class="pill gap">Growth area</span></td></tr>
+                <tr><td>UX Research with AI</td><td>-7</td><td><span class="pill wait">Discuss evidence</span></td></tr>
+                <tr><td>Workflow Automation</td><td>+2</td><td><span class="pill good">Aligned</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="panel">
+            <h2>Recommendations</h2>
+            <ul class="recommendations">
+              <li>Practice citing source evidence when using AI for research synthesis.</li>
+              <li>Create a personal checklist for hallucination, privacy, and bias review.</li>
+              <li>Share one validated AI workflow with the team during the next design critique.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="flow" id="present">
+        <div class="present">
+          <div>
+            <h2>AI Competency Snapshot</h2>
+            <p class="muted">Presentation-friendly results view hides unnecessary personal detail and keeps the conversation developmental.</p>
+          </div>
+          <div class="grid metrics">
+            <div class="metric"><div class="label">Completion</div><div class="value">75%</div></div>
+            <div class="metric"><div class="label">Avg maturity</div><div class="value">3.2</div></div>
+            <div class="metric"><div class="label">Top strength</div><div class="value">Prompting</div></div>
+            <div class="metric"><div class="label">Focus</div><div class="value">AI Safety</div></div>
+          </div>
+          <div class="footer-strip">
+            <span>Fictional demo data</span>
+            <span>Constructive wording only</span>
+            <span>Next stage: build vertical slice</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const buttons = document.querySelectorAll("[data-view]");
+    const flows = document.querySelectorAll(".flow");
+
+    function show(view) {
+      flows.forEach((flow) => flow.classList.toggle("active", flow.id === view));
+      buttons.forEach((button) => button.classList.toggle("active", button.dataset.view === view));
+    }
+
+    buttons.forEach((button) => button.addEventListener("click", () => show(button.dataset.view)));
+    document.querySelectorAll("[data-jump]").forEach((button) => {
+      button.addEventListener("click", () => show(button.dataset.jump));
+    });
+  </script>
+</body>
+</html>
