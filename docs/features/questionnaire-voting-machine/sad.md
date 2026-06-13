@@ -29,10 +29,12 @@ target_surfaces: [backend-service, web-frontend]
 | Tech Lead | Owns architecture, implementation boundaries, and SAD approval. | Yes |
 | Security Lead | Reviews role visibility, assessment confidentiality, and demo data exposure. | Yes |
 
+**Decision override.** A Vite + React single-page prototype with in-memory mock data exists in `src/` as a workshop visual demo. This SAD deliberately targets a different production stack - a hybrid Next.js full-stack application with Prisma-managed relational persistence and server-side scoring (ADR-0002 through ADR-0004) - rather than re-aligning the architecture to the prototype's Vite-SPA, no-backend shape. The prototype is treated as throwaway visual reference; production code is built fresh from the scaffold and is not migrated incrementally from the prototype. The prototype-to-production divergence is tracked as a risk in §11.
+
 ## 2. Constraints
 
 **Technical.**
-- The repository is greenfield for code: it currently contains product/SDD documents, but no application scaffold, package manifest, database schema, or persisted `docs/architecture-map.md`.
+- The repository contains a standalone Vite + React + TypeScript single-page prototype (`src/`, `package.json`, `vite.config.ts`, `index.html`) built as a workshop visual demo backed by in-memory mock data (`src/data/mockData.ts`). There is no backend handler layer, persistence layer, database schema, or persisted `docs/architecture-map.md`. This prototype is a non-production visual reference, not the production scaffold this SAD targets - see the §1 decision-override note.
 - The implementation target is a full-stack TypeScript web application following the workshop brief: React/Next.js-style web frontend, server-owned backend handlers, Prisma-managed relational persistence, local SQLite for workshop development, and a PostgreSQL-compatible path for a production-like demo.
 - Concrete runtime versions must be pinned during project scaffold before the first implementation task; this SAD intentionally avoids inventing package versions that are not present in the repo.
 - Scores, gaps, maturity levels, and recommendations are calculated on the backend from recorded responses and published scoring rules; browser-supplied scores are ignored.
@@ -643,7 +645,8 @@ ADR files live under `docs/features/questionnaire-voting-machine/adr/`.
 
 | Risk / debt | Severity | Mitigation | Owner |
 |---|---|---|---|
-| No app scaffold exists yet, so runtime/framework/database versions are not pinned. | Medium | Pin versions during project setup before implementation starts; update this SAD only if the chosen stack changes the architecture. | Tech Lead |
+| The existing `src/` Vite + React SPA prototype diverges from the target Next.js + Prisma production stack (different framework, no backend or persistence). | Medium | Treat the prototype as throwaway visual reference only; build the production scaffold fresh per ADR-0002/0003 and retire the Vite SPA once the production frontend reaches parity. Reconcile or remove the prototype before the first production frontend task. | Tech Lead |
+| No production app scaffold exists yet, so runtime/framework/database versions are not pinned. | Medium | Pin versions during project setup before implementation starts; update this SAD only if the chosen stack changes the architecture. | Tech Lead |
 | No persisted architecture map exists for the repo. | Medium | Run `/sdd:survey questionnaire-voting-machine` or create `docs/architecture-map.md` once the scaffold exists. | Tech Lead |
 | Lightweight access links may be guessed or shared. | High | Use signed, hard-to-guess tokens, short demo validity, server-side role checks, and access-denied logging. | Security Lead |
 | Presentation mode may accidentally expose named personal detail during a live demo. | High | Use fictional Designers by default and test the presentation-friendly results view with Security Lead before dry run. | Workshop Facilitator |
