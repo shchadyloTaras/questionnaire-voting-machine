@@ -17,7 +17,7 @@ Design teams are being asked to adopt AI in research, ideation, UX writing, desi
 
 The immediate trigger is an educational workshop about SDLC and AI-assisted development. The project must be useful as a product in its own right and as a teaching vehicle that walks participants from discovery and requirements through design, implementation, testing, deployment, demo, retrospective, and roadmap planning.
 
-The committed approach is a workshop-ready questionnaire voting machine: Designers complete a timed self-assessment, Design Leads assess the same Designers with related criteria, and the system compares results to produce constructive maturity levels, category gaps, and recommended learning focus. This balances a realistic company use case with an MVP small enough to build and explain in a workshop setting.
+The committed approach is a workshop-ready questionnaire voting machine: Designers complete a timed self-assessment, Design Leads assess the same Designers using a separate observer-oriented question set that shares the same assessment categories, and the system compares results to produce constructive maturity levels, category gaps, and recommended learning focus. This balances a realistic company use case with an MVP small enough to build and explain in a workshop setting.
 
 Decision assumptions recorded during intake:
 - Interview depth used: medium, based on the local SDD default.
@@ -33,6 +33,8 @@ Decision assumptions recorded during intake:
 ## 3. Non-goals
 
 - Full authentication and complex role management are not part of the MVP because the workshop needs a small, teachable access model.
+- In-product management of the Designer-to-Design-Lead assignment (Team list) is not part of the MVP; assignments are facilitator-seeded as configuration/demo data, so no assignment-management UI is built.
+- Runtime detection or automatic rewriting of punitive language is not part of the MVP; constructive tone is enforced through approved copy templates and a manual copy QA process, not a language-detection feature.
 - Full proctoring, video monitoring, and punitive anti-fraud controls are excluded because the product tone is developmental rather than disciplinary.
 - Payments, HR integrations, LMS integrations, and enterprise reporting are excluded because they would distract from the core assessment and SDLC learning goals.
 - Historical progress tracking and advanced adaptive testing are deferred because the MVP focuses on one workshop-ready assessment cycle.
@@ -117,7 +119,7 @@ Decision assumptions recorded during intake:
 
 **Given** a published Questionnaire is available and the Designer has an active Assessment session  
 **When** the Designer answers all required questions within the timing rules and submits the assessment  
-**Then** the system records the responses against the published Questionnaire version, marks the self-assessment complete, keeps the submitted attempt read-only for normal Designer use, and allows changes only through a clearly marked new attempt or facilitator-approved correction
+**Then** the system records the responses against the published Questionnaire version, marks the self-assessment complete, keeps the submitted attempt read-only for normal Designer use, and allows changes only through a facilitator-approved new attempt or correction. A Designer has a single self-assessment attempt by default; starting another attempt requires Workshop Facilitator approval, and the latest facilitator-approved submitted attempt is the authoritative one for scoring and comparison
 
 ### AC-03 (US-02) - error
 
@@ -129,7 +131,13 @@ Decision assumptions recorded during intake:
 
 **Given** a Designer is answering a timed question and no answer has been submitted  
 **When** the question timer expires  
-**Then** the system records that the question was not answered in time and moves the Assessment session to the next question or completion step according to the published timing rules, with no grace period or automatic partial-answer submission in the MVP
+**Then** the system records that the question was not answered in time, scores that required question as zero, and moves the Assessment session to the next question or completion step according to the published timing rules, with no grace period or automatic partial-answer submission in the MVP. Because a timed-out required question is recorded with a zero score rather than left blank, the assessment can still reach a complete, scorable state
+
+### AC-04b (US-02) - domain invariant
+
+**Given** a Designer has an active timed Assessment session with a full-assessment timing rule configured
+**When** the full-assessment timer expires while the Designer is mid-question
+**Then** the system ends the session, submits the answers recorded so far, marks every remaining required question as not answered in time and scores each as zero per AC-04, and the full-assessment timer takes precedence over the per-question timer
 
 ### AC-05 (US-03) - happy
 
@@ -139,7 +147,7 @@ Decision assumptions recorded during intake:
 
 ### AC-06 (US-04) - happy
 
-**Given** a Design Lead has access to a Team list of Assigned Designers
+**Given** a Design Lead has access to a facilitator-seeded Team list of Assigned Designers
 **When** the Design Lead selects an Assigned Designer from that list
 **Then** the system shows the Designer profile, assessment status, and available lead-assessment actions
 
@@ -147,12 +155,12 @@ Decision assumptions recorded during intake:
 
 **Given** a Design Lead is not assigned to view a Designer's assessment information
 **When** the Design Lead tries to open that Designer's profile  
-**Then** the system denies access to personal assessment details or hides them, and explains that the role has no permission for those results
+**Then** the system denies access to that Designer's profile and personal assessment details and explains that the role has no permission for those results
 
 ### AC-08 (US-05) - happy
 
 **Given** a Design Lead is viewing a Designer profile and a lead assessment is available  
-**When** the Design Lead completes the assessment using the configured categories  
+**When** the Design Lead completes the assessment using the observer-oriented question set for the configured categories  
 **Then** the system records the Lead assessment and makes it available for comparison with the Designer's self-assessment
 
 ### AC-09 (US-06) - happy
@@ -183,11 +191,11 @@ Decision assumptions recorded during intake:
 
 **Given** a Designer self-assessment or Lead assessment contains an answer for every required scorable question in that assessment side
 **When** the submission is accepted, the Design Lead opens that Assigned Designer's comparison view, or the Workshop Facilitator opens a results dashboard
-**Then** the system produces category scores, an overall score, and a maturity level using the published scoring rules
+**Then** the system produces category scores, an overall score for that assessment side, and a provisional maturity level for that side using the published scoring rules; the maturity level is derived from fixed score bands (Level 1 AI Curious 0-24, Level 2 AI Beginner 25-44, Level 3 AI Practitioner 45-64, Level 4 AI Power User 65-84, Level 5 AI Design Leader 85-100) that are part of the published scoring rules and are not separately configured per assessment
 
 ### AC-13 (US-08) - error
 
-**Given** an assessment is missing one or more required scorable answers for that assessment side
+**Given** an assessment side has no recorded response at all for one or more required scorable questions (a question never reached, or a session not yet started or submitted; this is distinct from a timed-out question, which is recorded with a zero score per AC-04 and does not count as missing)
 **When** results are requested  
 **Then** the system marks the result as unavailable and explains which assessment input is still missing
 
@@ -195,13 +203,13 @@ Decision assumptions recorded during intake:
 
 **Given** a Designer's self-assessment and the matching Lead assessment are both complete  
 **When** the comparison view is opened  
-**Then** the system shows the self-score, lead-score, combined score, overall gap, category gaps, maturity interpretation, and recommended focus areas
+**Then** the system shows the self-score, lead-score, combined score, overall gap, category gaps, maturity interpretation, and recommended focus areas, where the recommendations are produced from approved constructive recommendation templates selected by the score and gap profile (no free-form or externally generated recommendation text in the MVP)
 
 ### AC-15 (US-09) - cross-context
 
 **Given** only one side of the assessment is complete for a Designer  
 **When** the comparison view is opened  
-**Then** the system shows the available result and clearly states that the missing counterpart is required before the combined interpretation should be treated as final
+**Then** the system shows the available side's scores and provisional maturity level, omits the combined score and category gaps, and clearly states that the missing counterpart is required before the combined interpretation should be treated as final
 
 ### AC-16 (US-10) - happy
 
@@ -237,7 +245,7 @@ Decision assumptions recorded during intake:
 - **Abuse cases:**
   - Cross-team result access: deny personal assessment detail unless the actor is assigned to that Designer or acting as Workshop Facilitator.
   - Accidental exposure of Lead assessment: hide Lead assessment from the Designer unless the Workshop Facilitator explicitly enables that visibility.
-  - Toxic interpretation: use approved constructive copy templates and QA review for maturity labels, recommendations, and dashboard summaries; block or rewrite punitive labels before the workshop demo.
+  - Toxic interpretation: use approved constructive copy templates and QA review for maturity labels, recommendations, and dashboard summaries; block or rewrite punitive labels during the manual copy QA process before the workshop demo (this is a review process applied to authored copy and templates, not a runtime language-detection or auto-rewrite feature).
   - Spam setup activity: limit repeated questionnaire configuration actions to 20 per minute per Workshop Facilitator during the workshop.
   - Tampered score input: ignore client-provided scores and calculate results from recorded responses and published scoring rules.
 - **Security review:** Required because the feature handles personal development assessments, role-based visibility, and team-level reporting.
