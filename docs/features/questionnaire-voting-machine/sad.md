@@ -245,6 +245,328 @@ sequenceDiagram
     Web-->>DesignLead: Shows constructive comparison or pending state
 ```
 
+The following `sequences` stage blocks are the generic-participant runtime view used by downstream SDD stages. The design-stage seed diagrams above remain as architecture context.
+
+### Open self-assessment
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as <user>
+    participant UI as <ui>
+    participant S as <service>
+    participant D as <data-store>
+
+    Note over U,S: Precondition: Designer has a personal assessment link for a self-assessment attempt
+    U->>UI: Open personal assessment experience
+    UI->>S: Request assessment introduction
+    S->>D: Look up access link, session state, and published questionnaire version
+    D-->>S: Return access result, questionnaire purpose, and timing rules
+    alt valid access and self-assessment not complete
+        S-->>UI: Show purpose, constructive copy, timing rules, and begin action
+        UI-->>U: Display assessment introduction
+    else access invalid or attempt already read-only
+        S-->>UI: Explain unavailable assessment without exposing personal details
+        UI-->>U: Display access or completion state
+    end
+    Note over U,S: Postcondition: Designer sees either the approved introduction or a safe unavailable state
+```
+
+### Complete timed self-assessment
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as <user>
+    participant UI as <ui>
+    participant S as <service>
+    participant D as <data-store>
+
+    Note over U,S: Precondition: Designer has an active session from a published questionnaire version
+    U->>UI: Begin or continue self-assessment
+    UI->>S: Load current question state
+    S->>D: Read session, published questions, and timing rules
+    D-->>S: Return current required question
+    S-->>UI: Present current question with timing rules
+    loop required questions
+        U->>UI: Continue current step
+        alt answer present before question timer expires
+            UI->>S: Save answer and answer time signal
+            S->>D: Record response against published questionnaire version
+            Note over S,D: persists self-assessment response and answer time signal
+            D-->>S: Confirm response saved
+            S-->>UI: Advance to next question or submit step
+        else missing answer on continue or finish
+            UI->>S: Validate current step
+            S-->>UI: Explain that the question needs an answer before continuing
+        else question timer expires before answer
+            UI->>S: Record timed-out question
+            S->>D: Record unanswered-in-time signal against session
+            Note over S,D: persists timed-out response signal
+            D-->>S: Confirm timeout recorded
+            S-->>UI: Advance according to published timing rules
+        end
+    end
+    U->>UI: Submit self-assessment
+    UI->>S: Complete self-assessment attempt
+    S->>D: Mark self-assessment complete and read-only
+    Note over S,D: persists submitted self-assessment session
+    D-->>S: Confirm submitted state
+    S-->>UI: Show constructive completion confirmation
+    UI-->>U: Display non-punitive completion message
+    Note over U,S: Postcondition: Submitted attempt is read-only for normal Designer use
+```
+
+### Review assigned Designer profile
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as <user>
+    participant UI as <ui>
+    participant S as <service>
+    participant D as <data-store>
+
+    Note over U,S: Precondition: Design Lead is viewing a Team list of Assigned Designers
+    U->>UI: Select Designer from Team list
+    UI->>S: Request Designer profile and lead assessment actions
+    S->>D: Look up role, assignment, Designer status, and lead assessment availability
+    D-->>S: Return assignment result and profile inputs
+    alt Assigned Designer relationship exists
+        S-->>UI: Return profile, assessment status, and available lead actions
+        UI-->>U: Display Designer profile in lead context
+    else Design Lead is not assigned
+        S-->>UI: Deny personal assessment details and explain missing permission
+        UI-->>U: Display role-safe access message
+    end
+    Note over U,S: Postcondition: Design Lead sees only profiles allowed by assignment
+```
+
+### Complete Lead assessment
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as <user>
+    participant UI as <ui>
+    participant S as <service>
+    participant D as <data-store>
+
+    Note over U,S: Precondition: Design Lead has profile access and a Lead assessment is available
+    U->>UI: Complete Lead assessment
+    UI->>S: Submit Lead assessment responses
+    S->>D: Read assignment, published questionnaire version, and configured categories
+    D-->>S: Return lead assessment validation inputs
+    alt assignment allowed and required responses provided
+        S->>D: Record Lead assessment responses and optional comments
+        Note over S,D: persists lead assessment responses and comments
+        D-->>S: Confirm Lead assessment recorded
+        S-->>UI: Confirm Lead assessment is available for comparison
+        UI-->>U: Display recorded assessment state
+    else required Lead assessment input missing
+        S-->>UI: Explain which Lead assessment input is missing
+        UI-->>U: Keep assessment editable
+    else assignment no longer allowed
+        S-->>UI: Deny personal assessment details
+        UI-->>U: Display role-safe access message
+    end
+    Note over U,S: Postcondition: Lead assessment is either recorded or safely blocked with an explanation
+```
+
+### Configure and publish questionnaire
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as <user>
+    participant UI as <ui>
+    participant S as <service>
+    participant D as <data-store>
+
+    Note over U,S: Precondition: Workshop Facilitator can edit a draft Questionnaire
+    U->>UI: Add categories, questions, answer options, scoring weights, and timing rules
+    UI->>S: Save draft questionnaire content
+    S->>D: Store draft categories, questions, answer options, scoring weights, and timing rules
+    Note over S,D: persists draft questionnaire content and timing rules
+    D-->>S: Confirm draft saved
+    S-->>UI: Return draft review state
+    UI-->>U: Display saved draft and timing preview
+    U->>UI: Publish reviewed Questionnaire
+    UI->>S: Request publication
+    S->>D: Read draft completeness and latest draft content
+    D-->>S: Return validation inputs
+    alt missing required categories, scorable questions, usable options, weights, or timing rules
+        S-->>UI: Block publishing and name missing content
+        UI-->>U: Display required fixes
+    else draft complete
+        S->>D: Create immutable published questionnaire version
+        Note over S,D: persists published questionnaire version and immutable scoring rules
+        D-->>S: Confirm version available
+        S-->>UI: Confirm version available to new assessment sessions
+        UI-->>U: Display published state
+    end
+    Note over U,S: Postcondition: Draft remains editable or a frozen version is available to new sessions
+```
+
+### Calculate maturity score
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as <user>
+    participant UI as <ui>
+    participant S as <service>
+    participant D as <data-store>
+
+    Note over U,S: Precondition: A submission, comparison view, or dashboard requests score-dependent results
+    U->>UI: Request results or scoring-dependent view
+    UI->>S: Request score calculation
+    S->>D: Load recorded responses, published scoring rules, and assessment completion state
+    D-->>S: Return scoring inputs
+    alt every required scorable answer exists for the requested assessment side
+        S->>S: Calculate category scores, overall score, maturity level, and recommendations
+        S->>D: Store score output and recommendation snapshot
+        Note over S,D: persists score output, maturity level, and recommendation snapshot
+        D-->>S: Confirm score stored
+        S-->>UI: Return explainable score and maturity result
+        UI-->>U: Display constructive result
+    else one or more required scorable answers are missing
+        S-->>UI: Mark result unavailable and name missing assessment input
+        UI-->>U: Display pending result explanation
+    end
+    Note over U,S: Postcondition: Result is either reproducible from recorded inputs or marked unavailable
+```
+
+### Compare self and Lead assessments
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as <user>
+    participant UI as <ui>
+    participant S as <service>
+    participant D as <data-store>
+
+    Note over U,S: Precondition: Design Lead opens comparison for an Assigned Designer
+    U->>UI: Open comparison view
+    UI->>S: Request Designer comparison
+    S->>D: Read assignment, self-assessment, Lead assessment, scoring rules, and existing scores
+    D-->>S: Return comparison inputs
+    alt self-assessment and Lead assessment are both complete
+        S->>S: Calculate combined score, overall gap, category gaps, maturity interpretation, and focus areas
+        S->>D: Store comparison output
+        Note over S,D: persists comparison output, category gaps, and recommended focus areas
+        D-->>S: Confirm comparison stored
+        S-->>UI: Return complete comparison view
+        UI-->>U: Display constructive comparison and recommendations
+    else only one assessment side is complete
+        S-->>UI: Return available result and pending counterpart explanation
+        UI-->>U: Display partial result with finality warning
+    end
+    Note over U,S: Postcondition: Comparison is complete only when both assessment sides exist
+```
+
+### View Team dashboard
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as <user>
+    participant UI as <ui>
+    participant S as <service>
+    participant D as <data-store>
+
+    Note over U,S: Precondition: Workshop Facilitator is allowed to view facilitator-facing results
+    U->>UI: Open Team dashboard
+    UI->>S: Request team dashboard
+    S->>D: Read facilitator role, Designer statuses, score outputs, gaps, and maturity distribution
+    D-->>S: Return dashboard inputs
+    alt facilitator role allowed and at least one Designer has assessment data
+        S-->>UI: Return team status, named summaries, category trends, gap highlights, and maturity distribution
+        UI-->>U: Display facilitator-facing dashboard
+    else no assessment data is available
+        S-->>UI: Return empty dashboard state
+        UI-->>U: Display no-data guidance
+    else actor lacks facilitator access
+        S-->>UI: Deny dashboard access
+        UI-->>U: Display role-safe access message
+    end
+    Note over U,S: Postcondition: Dashboard shows only facilitator-allowed detail
+```
+
+### Present workshop results
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as <user>
+    participant UI as <ui>
+    participant S as <service>
+    participant D as <data-store>
+
+    Note over U,S: Precondition: Workshop Facilitator is presenting summary results during the workshop
+    U->>UI: Open presentation-friendly results view
+    UI->>S: Request presentation summary
+    S->>D: Read aggregate results, maturity distribution, category trends, and demo privacy settings
+    D-->>S: Return presentation inputs
+    S->>S: Minimize unnecessary personal detail and apply constructive copy templates
+    alt presentation privacy allows summary-only or anonymized detail
+        S-->>UI: Return group-safe summary for discussion
+        UI-->>U: Display presentation-friendly results
+    else source data includes named personal detail beyond approved scope
+        S-->>UI: Return minimized summary with personal details hidden
+        UI-->>U: Display privacy-safe presentation state
+    end
+    Note over U,S: Postcondition: Presentation view supports discussion without unnecessary personal exposure
+```
+
+### Runtime coverage check
+
+**User story coverage:**
+
+| User story | Runtime flow |
+|---|---|
+| US-01 Open self-assessment | Open self-assessment |
+| US-02 Complete timed questionnaire | Complete timed self-assessment |
+| US-03 See completion confirmation | Complete timed self-assessment |
+| US-04 Review designer profile | Review assigned Designer profile |
+| US-05 Complete lead assessment | Complete Lead assessment |
+| US-06 Configure questionnaire | Configure and publish questionnaire |
+| US-07 Configure timing rules | Configure and publish questionnaire |
+| US-08 Calculate maturity score | Calculate maturity score |
+| US-09 Compare assessments | Compare self and Lead assessments |
+| US-10 View team dashboard | View Team dashboard |
+| US-11 Present workshop results | Present workshop results |
+
+**Acceptance-criteria coverage:**
+
+| Acceptance criterion | Runtime coverage |
+|---|---|
+| AC-01 | Open self-assessment happy branch shows purpose, constructive wording, timing rules, and begin action. |
+| AC-02 | Complete timed self-assessment happy branch records responses against a published version and marks the submitted attempt read-only. |
+| AC-03 | Complete timed self-assessment missing-answer branch keeps the current step and explains the required answer. |
+| AC-04 | Complete timed self-assessment timer-expiry branch records the unanswered-in-time signal and advances by published timing rules. |
+| AC-05 | Complete timed self-assessment completion path returns constructive, non-punitive confirmation. |
+| AC-06 | Review assigned Designer profile happy branch returns profile, status, and lead-assessment actions. |
+| AC-07 | Review assigned Designer profile denied branch hides personal details and explains missing permission. |
+| AC-08 | Complete Lead assessment happy branch records Lead assessment responses for later comparison. |
+| AC-09 | Configure and publish questionnaire draft-save path persists categories, questions, options, scoring weights, and timing rules. |
+| AC-10 | Configure and publish questionnaire publish-validation branch blocks publishing and names missing content. |
+| AC-10b | Configure and publish questionnaire publish-success branch persists an immutable published Questionnaire version. |
+| AC-11 | Configure and publish questionnaire saves timing rules, and Open self-assessment displays them before Designers begin. |
+| AC-12 | Calculate maturity score happy branch produces category scores, overall score, maturity level, and recommendations from recorded inputs. |
+| AC-13 | Calculate maturity score missing-input branch marks the result unavailable and names the missing assessment input. |
+| AC-14 | Compare self and Lead assessments complete branch shows self-score, Lead-score, combined score, gaps, maturity interpretation, and focus areas. |
+| AC-15 | Compare self and Lead assessments partial branch shows available result and explains the missing counterpart. |
+| AC-16 | View Team dashboard happy branch shows team status, named summaries, trends, gap highlights, and maturity distribution. |
+| AC-17 | Present workshop results happy and privacy-minimized branches provide a discussion-ready summary with unnecessary personal detail hidden. |
+
+### Runtime flags for downstream stages
+
+- New participants needed by these flows: none beyond the declared `backend-service`, `web-frontend`, and relational data-store containers in §5.
+- Async runtime paths: none in the current spec. No `<message-bus>` or `<external-system>` flow is required.
+- Persist hints for `data-model`: draft questionnaire content, published questionnaire version, self-assessment responses, answer time signals, timed-out response signals, submitted session state, Lead assessment responses and comments, score outputs, maturity levels, recommendation snapshots, comparison outputs, category gaps, and recommended focus areas.
+
 ## 7. Deployment view
 
 The workshop MVP runs as one web application deployment with a relational database. Local development can use a local SQLite database file and seed data; the demo environment should use the same schema through a PostgreSQL-compatible managed database if the workshop needs multi-user durability. The app runtime can scale horizontally only after session writes and score calculations are proven stateless outside the database.
