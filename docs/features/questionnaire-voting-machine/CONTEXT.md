@@ -9,6 +9,7 @@ updated_at: "2026-06-13"
 
 - AI competency - A designer's observable knowledge, judgment, and practical use of AI across design work. NOT general technical literacy; it is scoped to UX/UI design practice.
 - AI maturity level - A five-level interpretation of assessment results that explains current AI practice in constructive language. NOT a pass/fail grade.
+- Assigned Designer - A Designer whom the Workshop Facilitator has explicitly linked to a Design Lead for lead assessment and visibility. NOT any Designer in the workshop cohort.
 - Assessment category - A skill area used to group questions and scores, such as Prompting Skills or Critical Thinking and AI Safety. NOT a page section or visual grouping only.
 - Assessment session - A time-bounded attempt by a Designer or Design Lead to answer an assessment for one Designer. NOT an editable draft after submission.
 - Answer time signal - Timing data that helps interpret assessment reliability, such as unusually fast or slow answers. NOT punitive surveillance.
@@ -20,13 +21,14 @@ updated_at: "2026-06-13"
 - Questionnaire - A configured set of categories, questions, answer options, scoring rules, and timing rules used for assessment. NOT a one-off survey with no scoring.
 - Recommendation - A constructive next learning step generated from scores and gaps. NOT a punitive performance label.
 - Self-assessment - A Designer's own answers about AI knowledge, usage, confidence, and critical judgment. NOT an externally verified skill proof.
-- Team dashboard - A facilitator-facing summary of designers, scores, gaps, maturity levels, and category trends. NOT a public leaderboard.
+- Team dashboard - A facilitator-facing view of named Designer summaries, aggregate scores, gaps, maturity levels, and category trends. NOT a public leaderboard.
+- Team list - The facilitator-seeded list of Assigned Designers a Design Lead can review and assess during the workshop. NOT a global directory of every Designer in the workshop.
 - Workshop Facilitator - The person who configures the questionnaire, demonstrates the system, and presents results during the workshop; also called Admin in workshop notes. NOT the Design Lead unless the same person is explicitly acting in both roles.
 
 ## Invariants
 
 - A submitted Assessment session can never be freely edited without starting a clearly marked new attempt or facilitator-approved correction.
-- A published Questionnaire always must include at least one Assessment category and at least one scorable question.
+- A published Questionnaire always must include required Assessment categories, required scorable questions, usable answer options, scoring weights, and timing rules.
 - Lead assessment results can never be shown to a Designer unless the Workshop Facilitator explicitly configures that visibility.
 - Recommendations always must use constructive development language and avoid punitive labels.
 

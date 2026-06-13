@@ -60,7 +60,7 @@ Decision assumptions recorded during intake:
 ### US-04: Review designer profile
 
 **As a** Design Lead  
-**I want** to open a Designer profile from my team list  
+**I want** to open a Designer profile from my Team list of Assigned Designers
 **So that** I can assess the Designer in the right context
 
 ### US-05: Complete lead assessment
@@ -111,13 +111,13 @@ Decision assumptions recorded during intake:
 
 **Given** a Designer has valid assessment access and has not completed the self-assessment  
 **When** the Designer opens the assessment experience  
-**Then** the system shows the assessment purpose, constructive tone, timing rules, and a clear way to begin
+**Then** the system shows the assessment purpose, approved constructive wording, timing rules, and a clear way to begin
 
 ### AC-02 (US-02) - happy
 
 **Given** a published Questionnaire is available and the Designer has an active Assessment session  
 **When** the Designer answers all required questions within the timing rules and submits the assessment  
-**Then** the system records the responses, marks the self-assessment complete, and prevents unlimited editing
+**Then** the system records the responses against the published Questionnaire version, marks the self-assessment complete, keeps the submitted attempt read-only for normal Designer use, and allows changes only through a clearly marked new attempt or facilitator-approved correction
 
 ### AC-03 (US-02) - error
 
@@ -129,23 +129,23 @@ Decision assumptions recorded during intake:
 
 **Given** a Designer is answering a timed question and no answer has been submitted  
 **When** the question timer expires  
-**Then** the system records that the question was not answered in time and moves the Assessment session forward according to the published timing rules
+**Then** the system records that the question was not answered in time and moves the Assessment session to the next question or completion step according to the published timing rules, with no grace period or automatic partial-answer submission in the MVP
 
 ### AC-05 (US-03) - happy
 
 **Given** a Designer has submitted the self-assessment  
 **When** the submission is accepted  
-**Then** the system shows a completion confirmation with constructive wording and no punitive result language
+**Then** the system shows a completion confirmation with approved constructive wording and no punitive result language
 
 ### AC-06 (US-04) - happy
 
-**Given** a Design Lead has access to a team list  
-**When** the Design Lead selects a Designer from that list  
+**Given** a Design Lead has access to a Team list of Assigned Designers
+**When** the Design Lead selects an Assigned Designer from that list
 **Then** the system shows the Designer profile, assessment status, and available lead-assessment actions
 
 ### AC-07 (US-04) - authorization
 
-**Given** a Design Lead is not allowed to view a Designer's assessment information  
+**Given** a Design Lead is not assigned to view a Designer's assessment information
 **When** the Design Lead tries to open that Designer's profile  
 **Then** the system denies access to personal assessment details or hides them, and explains that the role has no permission for those results
 
@@ -163,9 +163,15 @@ Decision assumptions recorded during intake:
 
 ### AC-10 (US-06) - domain invariant
 
-**Given** a draft Questionnaire has no Assessment categories, no scorable questions, or questions without usable answer options  
+**Given** a draft Questionnaire is missing required Assessment categories, required scorable questions, usable answer options, scoring weights, or timing rules
 **When** the Workshop Facilitator tries to publish it  
 **Then** the system blocks publishing and names the missing content that must be added first
+
+### AC-10b (US-06) - domain invariant
+
+**Given** a draft Questionnaire includes required Assessment categories, required scorable questions, usable answer options, scoring weights, and timing rules
+**When** the Workshop Facilitator publishes it
+**Then** the system makes that Questionnaire version available to new Assessment sessions and keeps its questions, answer options, scoring weights, and timing rules unchanged for sessions started from that version
 
 ### AC-11 (US-07) - happy
 
@@ -175,13 +181,13 @@ Decision assumptions recorded during intake:
 
 ### AC-12 (US-08) - happy
 
-**Given** a Designer self-assessment or Lead assessment contains enough scorable answers  
-**When** results are calculated  
+**Given** a Designer self-assessment or Lead assessment contains an answer for every required scorable question in that assessment side
+**When** the submission is accepted, the Design Lead opens that Assigned Designer's comparison view, or the Workshop Facilitator opens a results dashboard
 **Then** the system produces category scores, an overall score, and a maturity level using the published scoring rules
 
 ### AC-13 (US-08) - error
 
-**Given** an assessment does not contain enough scorable answers to calculate a trustworthy result  
+**Given** an assessment is missing one or more required scorable answers for that assessment side
 **When** results are requested  
 **Then** the system marks the result as unavailable and explains which assessment input is still missing
 
@@ -201,7 +207,7 @@ Decision assumptions recorded during intake:
 
 **Given** at least one Designer has assessment data available to the Workshop Facilitator  
 **When** the Workshop Facilitator opens the Team dashboard  
-**Then** the system shows team status, Designer-level summaries, category trends, gap highlights, and maturity distribution
+**Then** the system shows team status, facilitator-facing named Designer summaries, category trends, gap highlights, and maturity distribution
 
 ### AC-17 (US-11) - happy
 
@@ -221,16 +227,17 @@ Decision assumptions recorded during intake:
 | Accessibility | WCAG 2.2 AA for core assessment, lead assessment, and dashboard flows | accessibility audit and keyboard-only QA |
 | Data recovery | No submitted assessment response lost after a page refresh | integration test and manual refresh scenario |
 | Error clarity | 100% of blocking validation messages name the missing or invalid action in plain language | manual QA checklist |
+| Constructive content review | 100% of maturity labels, recommendations, and dashboard summaries use approved constructive copy templates and pass QA review before the workshop demo | copy QA checklist |
 
 ## 6.1 Security / privacy
 
 - **Data classification:** confidential - assessment answers, lead comments, and competency interpretations can affect workplace perception even though they are not regulated health or payment data.
 - **Personal data touched:** Designer name, team label, lead relationship, assessment responses, answer timing, lead comments, scores, maturity levels, and recommendations.
-- **AuthZ/AuthN impact:** the MVP uses lightweight access boundaries suitable for a workshop; Designers can access only their own assessment, Design Leads can access assigned Designers, and the Workshop Facilitator can configure questionnaires and view aggregate results.
+- **AuthZ/AuthN impact:** the MVP uses lightweight access boundaries suitable for a workshop; Designers can access only their own assessment, Design Leads can access Assigned Designers from their Team list, and the Workshop Facilitator can configure questionnaires, view aggregate results, and view named Designer summaries in facilitator-facing dashboards.
 - **Abuse cases:**
   - Cross-team result access: deny personal assessment detail unless the actor is assigned to that Designer or acting as Workshop Facilitator.
   - Accidental exposure of Lead assessment: hide Lead assessment from the Designer unless the Workshop Facilitator explicitly enables that visibility.
-  - Toxic interpretation: block or rewrite punitive labels in maturity and recommendation text.
+  - Toxic interpretation: use approved constructive copy templates and QA review for maturity labels, recommendations, and dashboard summaries; block or rewrite punitive labels before the workshop demo.
   - Spam setup activity: limit repeated questionnaire configuration actions to 20 per minute per Workshop Facilitator during the workshop.
   - Tampered score input: ignore client-provided scores and calculate results from recorded responses and published scoring rules.
 - **Security review:** Required because the feature handles personal development assessments, role-based visibility, and team-level reporting.
