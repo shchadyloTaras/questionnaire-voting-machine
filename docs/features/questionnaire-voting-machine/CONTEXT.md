@@ -20,6 +20,7 @@ updated_at: "2026-06-13"
 - Lead assessment - A Design Lead's assessment of a Designer's practical AI competency. NOT the Designer's self-assessment.
 - Overall score - The aggregate 0-100 score for a single assessment side, computed as the weighted average of that side's category scores (the self-score for the Designer side, the lead-score for the Design Lead side). NOT the Combined score, which blends both sides.
 - Presentation-friendly results view - A facilitator-facing summary mode that hides unnecessary personal detail during a live workshop demo. NOT a full analytics dashboard.
+- Provisional maturity level - A maturity level calculated for one assessment side before both sides are complete. NOT AI maturity level (which is the final combined interpretation after both self and lead assessments exist).
 - Questionnaire - A configured set of categories, questions, answer options, scoring rules, and timing rules used for assessment. NOT a one-off survey with no scoring.
 - Recommendation - A constructive next learning step generated from scores and gaps. NOT a punitive performance label.
 - Self-assessment - A Designer's own answers about AI knowledge, usage, confidence, and critical judgment. NOT an externally verified skill proof.
